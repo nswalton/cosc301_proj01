@@ -1,7 +1,7 @@
-/*
- *
- * author name(s), date, and other info here
- *
+/* Neil Walton
+ * September 26, 2014
+ * COSC301
+ * Project 1
  */
 
 #include <stdio.h>
@@ -9,19 +9,74 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include "list.h"
 
+
+
+
+
 void process_data(FILE *input_file) {
-    // !! your code should start here.  the input_file parameter
-    // is an already-open file.  you can read data from it using
-    // the fgets() C library function.  close it with the fclose()
-    // built-in function
 
+    struct node **head = malloc(sizeof(struct node));
+    
 
+    size_t size = 0;
+    char *line = NULL;
+    while (getline(&line, &size, input_file) != -1) {
+	for (int i = 0; i < strlen(line); i++) {
+	    char curr = line[i];
+	    if (curr == '#') {
+		line[i] = '\0';
+		break;
+	    }
+	}
 
+	//Tokenize here
+
+	char *copy = strdup(line);
+        char *token = malloc(sizeof(char)*strlen(line));
+
+        token = strtok(copy, " \n\t");
+
+        while (token != NULL) {
+	    int isint = 0;
+	    for (int i = 0; i < strlen(token); i++) {
+		if ((token[i] < 48) || (token[i] > 57)) {
+		    isint = 1;
+		    break;
+		}
+	    }
+	    if (isint == 0) {
+		int inttoken = atoi(token);
+		list_append(inttoken, head);
+
+	    }
+	    token = strtok(NULL, " \n\t");
+        }
+    }
+
+    list_sort(head);
+    printf("***List contents begins here***\n");
+    list_print(*head);
+    printf("***List contents ends here***\n");
+    list_destroy(head);
+
+    struct rusage usage;
+    if (getrusage(RUSAGE_SELF, &usage) == 0) {
+	printf("User time: %ld.%06ld\n", usage.ru_utime.tv_sec, usage.ru_utime.tv_usec);
+        printf("System time: %ld.%06ld\n", usage.ru_stime.tv_sec, usage.ru_stime.tv_usec);
+    } 
+    if (getrusage(RUSAGE_SELF, &usage) == -1) {
+	fprintf(stderr, "Did not retrieve usage information.\n");
+	exit(1);
+    } 
 
 }
+
+
 
 
 void usage(char *program) {
